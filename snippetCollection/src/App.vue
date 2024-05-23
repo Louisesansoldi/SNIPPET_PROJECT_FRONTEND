@@ -1,21 +1,14 @@
-<script setup>
-import AuthPage from './components/AuthPage.vue'
-
-// export default {
-//   name : 'App',
-//   components : {
-//     AuthPage
-//   }
-// }
-</script>
-
-
 <template>
   <div id="app">
-    <AuthPage />
+    <router-view />
   </div>
 </template>
 
-<style>
+<script setup>
+// Vous n'avez pas besoin d'importer vos composants ici, 
+// ils seront gérés par le routeur.
+</script>
 
+<style>
+/* Styles globaux, si nécessaire */
 </style>

@@ -13,6 +13,7 @@
       <button type="submit">Login</button>
     </form>
     <div v-if="loginError">{{ loginError }}</div>
+    <div v-if="loginSuccess">{{ loginSuccess }}</div>
 
     <h2>Register</h2>
     <form @submit.prevent="register">
@@ -31,6 +32,7 @@
       <button type="submit">Register</button>
     </form>
     <div v-if="registerError">{{ registerError }}</div>
+    <div v-if="registerSuccess">{{ registerSuccess }}</div> <!-- Correction : utiliser registerSuccess -->
   </div>
 </template>
 
@@ -44,27 +46,46 @@ export default {
       registerEmail: '',
       registerPassword: '',
       loginError: null,
-      registerError: null
+      registerError: null,
+      registerSuccess: null,
+      loginSuccess: null 
     };
   },
   methods: {
     async login() {
-      try {
-        const response = await fetch('https://snippetcollection-ed3be9a9dce5.herokuapp.com/api/auth/login', {
-          method: 'POST',
+        try {
+            const response = await fetch('https://snippetcollection-ed3be9a9dce5.herokuapp.com/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: this.loginEmail,
+                    password: this.loginPassword
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message);
+            }
+            // Stockez le token JWT dans le stockage local
+            localStorage.setItem('token', data.token); // Stockage dans le stockage local
+
+
+           // Récupérer la collection de l'utilisateur
+        const collectionResponse = await fetch('https://snippetcollection-ed3be9a9dce5.herokuapp.com/api/my-collection', {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: this.loginEmail,
-            password: this.loginPassword
-          })
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message);
+        const collectionData = await collectionResponse.json();
+        if (!collectionResponse.ok) {
+          throw new Error(collectionData.message);
         }
-        // Traitement du token JWT reçu, par exemple, stockage dans le local storage
+        // Rediriger vers MyCollection.vue avec l'ID de la collection
+        this.$router.push({ name: 'MyCollection', params: { collectionId: collectionData.id_collection } });
       } catch (error) {
         this.loginError = error.message;
       }
@@ -86,9 +107,14 @@ export default {
         if (!response.ok) {
           throw new Error(data.message);
         }
-        // Affichage d'un message de succès ou redirection vers une autre page
+        // Afficher le message de succès lorsque l'inscription réussit
+        this.registerSuccess = "Registration successful!";
+        // Réinitialiser le message d'erreur
+        this.registerError = null;
       } catch (error) {
         this.registerError = error.message;
+        // Réinitialiser le message de succès en cas d'échec de l'inscription
+        this.registerSuccess = null;
       }
     }
   }
